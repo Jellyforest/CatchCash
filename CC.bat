@@ -1,0 +1,1 @@
+"C:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe" "C:\Users\pc\Desktop\giiit\CatchCash\CatchCash.uproject" -game -log -Windowed -ResX=640 -ResY=480

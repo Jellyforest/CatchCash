@@ -10,6 +10,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Net/UnrealNetwork.h"
+
+#include "ServerGameInstance.h"
+
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -18,6 +22,9 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ACatchCashCharacter::ACatchCashCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+	//생성자에서 Tick 사용한다고 활성화 해주기
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
@@ -52,12 +59,50 @@ ACatchCashCharacter::ACatchCashCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
 }
 
 void ACatchCashCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+}
+
+void ACatchCashCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	//상태 정보를 출력한다
+	DrawDebugString(GetWorld(), GetActorLocation(), PrintInfo(), nullptr, FColor::White, 0.0f, true, 1.0f);
+
+	if (HasAuthority())
+	{
+		//서버에서만 실행될것이다.
+		number++;
+		repNumber++;
+	}
+}
+
+FString ACatchCashCharacter::PrintInfo()
+{
+#pragma region RoleInfo
+	/*
+	FString myLocalRole = UEnum::GetValueAsString<ENetRole>(GetLocalRole());
+	FString myRemoteRole = UEnum::GetValueAsString<ENetRole>(GetRemoteRole());
+	FString myConnection = GetNetConnection() != nullptr ? TEXT("Valid") : TEXT("InValid");
+	FString myOwner = GetOwner() != nullptr ? GetOwner()->GetName() : TEXT("No Owner");
+
+	//하나로 묶어서 출력하기
+	FString infoText = FString::Printf(TEXT("Local Role : %s\nRemote Role : %s\nNet Connection : %s\nOwner : %s"),
+		*myLocalRole, *myRemoteRole, *myConnection, *myOwner);
+		*/
+#pragma endregion
+
+	
+#pragma region RepOrNot
+	FString infoText = FString::Printf(TEXT("Number : %d\nRepNumber : %d"), number, repNumber);
+#pragma endregion
+
+	return infoText;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -86,6 +131,9 @@ void ACatchCashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACatchCashCharacter::Look);
+
+		//쏴라
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ACatchCashCharacter::Fire);
 	}
 	else
 	{
@@ -128,3 +176,19 @@ void ACatchCashCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
+
+void ACatchCashCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACatchCashCharacter, repNumber); //변수를 복제할것이다
+
+}
+
+void ACatchCashCharacter::Fire()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Query Fire!"))
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, FString("Query Fire!"), true, FVector2D(1.2f));
+	
+}
+

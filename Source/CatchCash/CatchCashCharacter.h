@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Net/UnrealNetwork.h"
 #include "CatchCashCharacter.generated.h"
 
 class USpringArmComponent;
@@ -64,10 +65,32 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	virtual void Tick(float DeltaSeconds) override;
+
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+private:
+	UFUNCTION()
+	FString PrintInfo();
+
+
+	int32 number; //얘는 복제 안하고
+	UPROPERTY(Replicated)
+	int32 repNumber;//얘만 복제할것이다
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* FireAction;
+
+protected:
+	
+	void Fire();
+	
+
 };
 
